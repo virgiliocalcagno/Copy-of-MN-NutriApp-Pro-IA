@@ -1,0 +1,7 @@
+{
+  "name": "Copy of MN-NutriApp Pro IA",
+  "description": "Una plataforma integral de salud y nutrición con seguimiento de comidas asistido por IA, planes de entrenamiento y expediente médico digital.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
