@@ -23,31 +23,6 @@ const HomeView: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
-            {user?.photoURL ? (
-              <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-            ) : (
-              <span className="material-symbols-outlined text-primary">person</span>
-            )}
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 font-medium">Panel de Control</p>
-            <h1 className="text-lg font-bold leading-none truncate max-w-[150px]">
-              {store.profile.paciente?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Hola!'}
-            </h1>
-          </div>
-        </div>
-        <button className="relative p-2 rounded-full hover:bg-slate-100 transition-colors">
-          <span className="material-symbols-outlined text-slate-600">notifications</span>
-          <span className="absolute top-2 right-2 size-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-        </button>
-      </header>
-
-
-
       <div className="p-4 space-y-8">
         {/* Shopping List CTA */}
         <section>

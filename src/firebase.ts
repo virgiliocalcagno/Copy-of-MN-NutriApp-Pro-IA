@@ -9,7 +9,8 @@ export const firebaseConfig = {
     storageBucket: "mn-nutriapp.firebasestorage.app",
     messagingSenderId: "706226122083",
     appId: "1:706226122083:web:754e9feedc0cc0b5377756",
-    measurementId: "G-J39PRJB106"
+    measurementId: "G-J39PRJB106",
+    geminiApiKey: "AIzaSyDkfy9krTwpTQzYjisbsfaXUMZ_EJuQy3Y"
 };
 
 export const app = initializeApp(firebaseConfig);

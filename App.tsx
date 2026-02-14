@@ -4,7 +4,7 @@ import HomeView from './views/HomeView';
 import FitnessView from './views/FitnessView';
 import ProgressView from './views/ProgressView';
 import ProfileView from './views/ProfileView';
-import BottomNav from './components/BottomNav';
+import TopNav from './components/TopNav';
 import ShoppingView from './views/ShoppingView';
 import LoginScreen from './src/components/LoginScreen';
 import { useStore } from './src/context/StoreContext';
@@ -39,12 +39,12 @@ const App: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto bg-[#f8fafc] min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
-      <main className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+      {currentView !== 'shopping' && (
+        <TopNav currentView={currentView} setCurrentView={setCurrentView} />
+      )}
+      <main className="flex-1 overflow-y-auto no-scrollbar">
         {renderView()}
       </main>
-      {currentView !== 'shopping' && (
-        <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
-      )}
     </div>
   );
 };

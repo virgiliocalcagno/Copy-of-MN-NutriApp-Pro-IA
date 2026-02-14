@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../src/context/StoreContext';
 import { processPdfWithGemini } from '../src/utils/ai';
-import { MealItem } from '../src/types/store';
+import { MealItem, initialStore } from '../src/types/store';
 import { firebaseConfig } from '../src/firebase'; // Import config
 
 const ProfileView: React.FC = () => {
@@ -29,12 +29,12 @@ const ProfileView: React.FC = () => {
 
           let data;
           try {
-            // Internal fallback in ai.ts handles failure now
-            const activeKey = store.aiKey || firebaseConfig.apiKey;
+            // Usar la llave de Gemini centralizada en firebase.ts (no visible en UI)
+            const activeKey = (firebaseConfig as any).geminiApiKey;
             data = await processPdfWithGemini(profile, base64, undefined, activeKey);
           } catch (error) {
-            console.error("PDF Processing failed even with fallback:", error);
-            return; // Error already alerted in ai.ts
+            console.error("Error procesando PDF:", error);
+            return;
           }
 
           if (data) {
@@ -47,30 +47,32 @@ const ProfileView: React.FC = () => {
                 delete newProfile[key as keyof typeof newProfile];
               }
             });
-            const mergedProfile = { ...store.profile, ...newProfile };
+            // NEW: We REPLACE the data to avoid mixing different patients.
+            const mergedProfile = {
+              ...initialStore.profile, // Start clean
+              ...data.perfilAuto
+            };
 
-            const newMenu = data.semana || store.menu;
-            const newExercises = data.ejercicios || store.exercises;
+            const newMenu = data.semana || {};
+            const newExercises = data.ejercicios || {};
 
             // Map Compras to MealItems
-            const newItems: MealItem[] = (data.compras || []).map(c => ({
-              id: Date.now() + Math.random().toString(),
+            const newItems: MealItem[] = (data.compras || []).map((c, idx) => ({
+              id: Date.now() + '-' + idx,
               n: c[0],
               q: c[1],
-              lv: 4, // Default full
+              lv: 4,
               cat: c[3] || 'Gral',
               p: c[3] || 'Gral',
               b: false
             }));
-
-            const currentItems = [...store.items, ...newItems];
 
             saveStore({
               ...store,
               profile: mergedProfile,
               menu: newMenu,
               exercises: newExercises,
-              items: currentItems
+              items: newItems // REPLACED
             });
 
             const daysCount = Object.keys(newMenu || {}).length;
@@ -270,35 +272,6 @@ const ProfileView: React.FC = () => {
           </div>
         </div>
 
-        {/* AI Settings */}
-        <div className="pb-10">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 mb-4">
-            <span className="material-symbols-outlined text-indigo-500">smart_toy</span>
-            Configuración de IA
-          </h3>
-          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-bold text-slate-900">Motor de Análisis Gemini</p>
-                <p className="text-xs text-indigo-600 font-medium">
-                  {store.aiKey ? '✅ Clave Personal Activa' : '⚠️ Usando Clave de Sistema'}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  const newKey = prompt("Configura tu API Key de AI Studio:", store.aiKey || "");
-                  if (newKey !== null) saveStore({ ...store, aiKey: newKey });
-                }}
-                className="bg-white text-indigo-600 p-2 rounded-xl border border-indigo-200 shadow-sm active:scale-95 transition-all"
-              >
-                <span className="material-symbols-outlined">settings_input_component</span>
-              </button>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              La IA procesa tus PDF sin costo adicional usando tu propia clave. Puedes obtener una gratis en aistudio.google.com.
-            </p>
-          </div>
-        </div>
       </main>
     </div>
   );

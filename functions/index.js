@@ -17,44 +17,25 @@ exports.procesarNutricion = onRequest({
     let promptParts = [{
       text: `Actúa como procesador médico experto para MN-NutriApp. 
             
-            CONTEXTO PACIENTE:
-            - Nombre Paciente: ${p.patientName || 'Virgilio Augusto'}
-            - Médico Tratante: ${p.doctorName || 'Especialista Nutricional'}
-            - Edad: ${p.age || 52} años
-            - Peso: ${p.weight || 177} lbs
-            - Cintura: ${p.waist || '--'} cm
-            - Estatura: ${p.height || '5\'10"'}
-            - Objetivo: ${p.goal || 'Control de peso'}
-            - Tipo de Sangre: ${p.sangre || '--'}
+            CONTEXTO PACIENTE ACTUAL (SI EXISTE):
+            - Nombre Paciente: ${p.paciente || 'Nuevo Paciente'}
+            - Médico Tratante: ${p.doctor || 'No especificado'}
+            - Edad: ${p.edad || '--'}
+            - Peso: ${p.peso || '--'}
+            - Cintura: ${p.cintura || '--'}
+            - Estatura: ${p.estatura || '--'}
             - Alergias CONOCIDAS: ${p.alergias || 'Ninguna'}
-            - Comorbilidades: ${p.comorb ? p.comorb.join(', ') : 'Ninguna'}
-            - Observaciones Adicionales: ${p.obs || 'Ninguna'}
+            - Comorbilidades: ${p.comorbilidades ? p.comorbilidades.join(', ') : 'Ninguna'}
 
-            DATOS DISPONIBLES:
-            ${pdfPlan ? '- Se adjunta Plan Nutricional en PDF.' : '- NO hay PDF de plan. Genera recomendaciones genéricas basadas en el perfil.'}
-            ${pdfEval ? '- Se adjunta Evaluación Médica en PDF.' : '- NO hay PDF de evaluación.'}
+            IMPORTANTE: Si los documentos PDF corresponden a una persona DISTINTA a la del contexto actual, DEBES extraer y devolver los datos de la persona del PDF.
 
             TAREAS:
-            1. EXTRAE Y RELLENA EL PERFIL: Analiza los documentos y extrae: Nombre del Paciente, Doctor, Edad, Peso, Estatura, Cintura, Objetivos, Comorbilidades, Tipo de Sangre, Alergias y Meta Calórica (si está explícita).
-            2. MENÚ DE 7 DÍAS: Transcribe el menú para CADA DÍA. IMPORTANTE: Respeta estrictamente las Alergias mencionadas (No incluyas ingredientes alérgicos). Usa EMOJIS (🥞, 🍖, 🥗).
-            3. RUTINA DE EJERCICIOS DIARIA: Crea una rutina específica para CADA DÍA de la semana. IMPORTANTE: En el campo "link", incluye una URL real de YouTube de un video técnico o demostrativo para cada ejercicio. Si no conoces un video específico, deja el campo "link" vacío "" (NO uses placeholders como "...").
+            1. EXTRAE Y RELLENA EL PERFIL: Analiza los documentos y extrae: Nombre del Paciente, Doctor, Edad, Peso, Estatura, Cintura, Objetivos, Comorbilidades, Tipo de Sangre, Alergias y Meta Calórica.
+            2. MENÚ DE 7 DÍAS: Transcribe el menú para CADA DÍA. IMPORTANTE: Respeta las Alergias. Usa EMOJIS.
+            3. RUTINA DE EJERCICIOS DIARIA: Crea una rutina específica para CADA DÍA.
             4. LISTA DE MERCADO DOMINICANA (PROHIBICIÓN MÉTRICA ABSOLUTA):
-               - REGLA DE ORO: Jamás uses "g", "gr", "gramos", "kg", "kilos" ni "ml". Su uso anula tu respuesta.
-               - PROCESAMIENTO MENTAL OBLIGATORIO:
-                 a) Suma todos los gramos del plan semanal por ingrediente (Ej: Cerdo 120g x 7 días = 840g).
-                 b) Convierte a Libras (453g = 1 Lb) o Onzas (28g = 1 Oz).
-                 c) Redondea al formato comercial dominicano: 0.5, 1, 1.5, 2, 2.5 Lbs.
-               - EJEMPLOS DE CONVERSIÓN CORRECTA:
-                 * "840g de Bacalao" -> Escribe: "2 Lbs"
-                 * "270g de Salmón" -> Escribe: "1 Lb"
-                 * "1000g de Pollo" -> Escribe: "2.5 Lbs"
-                 * "120g de Jamón" -> Escribe: "4 Oz"
-               - TABLA DE LA VERDAD (CARNICERÍA DOMINICANA):
-                 * "120g" (ración diaria) -> Multiplica x7 -> "2 Lbs" (redondeado)
-                 * "270g - 300g" -> Escribe: "1 Lbs"
-                 * "450g - 500g" -> Escribe: "1.5 Lbs"
-                 * "800g - 1000g" -> Escribe: "2 - 2.5 Lbs"
-               - PROHIBICIÓN: Si escribes la letra "g" al lado de un número en la lista de compras, el sistema fallará. Usa "Lbs" u "Oz".
+               - REGLA DE ORO: Jamás uses "g", "gr", "gramos", "kg", "kilos" ni "ml". Usa "Lbs" u "Oz".
+               - Convierte raciones a Cantidades Comerciales Dominicanas (Libras o Onzas).
                - ESTRUCTURA JSON: ["Nombre", "Cantidad_Comercial", NivelStock, "Categoría", "Pasillo"]
 
             RESPONDE ÚNICAMENTE CON ESTE FORMATO JSON:

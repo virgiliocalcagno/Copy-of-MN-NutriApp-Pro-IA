@@ -26,11 +26,6 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         if (local) {
             try {
                 const parsed = JSON.parse(local);
-                // Forzar actualización si la llave es la vieja o está vacía
-                if (!parsed.aiKey || parsed.aiKey === 'AIzaSyAF5rs3cJFs_E6S7ouibqs7B2fgVRDLzc0' || parsed.aiKey !== initialStore.aiKey) {
-                    console.log("Actualizando API Key de local a:", initialStore.aiKey);
-                    parsed.aiKey = initialStore.aiKey;
-                }
                 setStore(parsed);
             } catch (e) {
                 console.error('Error parsing local storage', e);

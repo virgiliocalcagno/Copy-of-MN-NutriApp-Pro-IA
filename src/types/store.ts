@@ -48,7 +48,6 @@ export interface Store {
     historial: string[];
     medals: { silver: number; gold: number };
     locks: { perfil: boolean; compras: boolean; existencia: boolean };
-    aiKey?: string;
 }
 
 export const initialStore: Store = {
@@ -66,6 +65,5 @@ export const initialStore: Store = {
     },
     historial: [],
     medals: { silver: 0, gold: 0 },
-    locks: { perfil: true, compras: true, existencia: true },
-    aiKey: 'AIzaSyDkfy9krTwpTQzYjisbsfaXUMZ_EJuQy3Y'
+    locks: { perfil: true, compras: true, existencia: true }
 };
