@@ -95,9 +95,9 @@ const ProfileView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col animate-in slide-in-from-bottom duration-500 pb-20 relative">
+    <div className="flex flex-col animate-in slide-in-from-bottom duration-500 relative">
       {isProcessing && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
           <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center animate-in zoom-in-95 max-w-sm w-full text-center">
             <div className="size-20 border-[6px] border-blue-100 border-t-blue-600 rounded-full animate-spin mb-6"></div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Analizando Ficha Médica</h3>
@@ -108,29 +108,6 @@ const ProfileView: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Header */}
-      <header className="flex items-center p-4 pt-6 justify-between bg-white sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center justify-center p-2 rounded-lg hover:bg-primary/10 transition-colors text-slate-600">
-            <span className="material-symbols-outlined text-2xl">arrow_back</span>
-          </button>
-          <h1 className="text-xl font-bold tracking-tight">Mi Perfil Médico</h1>
-        </div>
-        <div className="relative">
-          <button onClick={() => setShowLogout(!showLogout)} className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-slate-600">
-            <span className="material-symbols-outlined text-2xl">settings</span>
-          </button>
-          {showLogout && (
-            <div className="absolute right-0 top-12 bg-white shadow-xl rounded-xl border border-slate-100 p-2 w-40 z-50 animate-in slide-in-from-top-2">
-              <button onClick={logout} className="w-full text-left px-4 py-2 text-red-500 font-bold hover:bg-red-50 rounded-lg flex items-center gap-2">
-                <span className="material-symbols-outlined">logout</span>
-                Cerrar Sesión
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
 
       {/* Profile Bio */}
       <div className="px-6 py-6 flex items-center gap-5 bg-white border-b border-slate-100">
@@ -146,8 +123,23 @@ const ProfileView: React.FC = () => {
             <span className="material-symbols-outlined text-[14px] font-bold">verified</span>
           </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">{profile.paciente || user?.displayName || 'Usuario'}</h2>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-slate-900">{profile.paciente || user?.displayName || 'Usuario'}</h2>
+            <div className="relative">
+              <button onClick={() => setShowLogout(!showLogout)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400">
+                <span className="material-symbols-outlined text-xl">settings</span>
+              </button>
+              {showLogout && (
+                <div className="absolute right-0 top-10 bg-white shadow-2xl rounded-xl border border-slate-100 p-2 w-44 z-[110] animate-in slide-in-from-top-2">
+                  <button onClick={logout} className="w-full text-left px-4 py-2 text-red-500 text-sm font-bold hover:bg-red-50 rounded-lg flex items-center gap-2">
+                    <span className="material-symbols-outlined text-lg">logout</span>
+                    Cerrar Sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
           <p className="text-sm text-primary font-bold bg-primary/5 px-2 py-0.5 rounded-md inline-block mt-1">Dr. {profile.doctor || 'No asignado'}</p>
           <p className="text-xs text-slate-400 mt-1">{user?.email}</p>
         </div>

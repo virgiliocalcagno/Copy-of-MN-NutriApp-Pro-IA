@@ -41,10 +41,10 @@ exports.procesarNutricion = onRequest({
             RESPONDE ÚNICAMENTE CON ESTE FORMATO JSON:
             {
               "perfilAuto": {
-                "paciente": "...", "doctor": "...", "edad": 52, "peso": 177, "estatura": "5'10\"", "cintura": 85,
+                "paciente": "...", "doctor": "...", "edad": "...", "peso": "...", "estatura": "...", "cintura": "...",
                 "sangre": "...", "alergias": "...",
-                "objetivos": ["Bajar peso", ...], "comorbilidades": ["Diabetes", ...],
-                "metaCalorias": 2000
+                "objetivos": [], "comorbilidades": [],
+                "metaCalorias": 0
               },
               "semana": { 
                 "LUNES": {"DESAYUNO": "...", "MERIENDA_AM": "...", "ALMUERZO": "...", "MERIENDA_PM": "...", "CENA": "..." },

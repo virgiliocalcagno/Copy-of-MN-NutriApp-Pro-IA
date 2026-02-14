@@ -40,18 +40,6 @@ const FitnessView: React.FC = () => {
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right duration-500">
-      <header className="p-6 bg-white shadow-sm sticky top-0 z-10">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-800 text-slate-900">Zona Fit</h1>
-            <p className="text-sm text-slate-500 font-medium">¡Vamos por tus objetivos hoy!</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <span className="material-symbols-outlined">notifications</span>
-          </div>
-        </div>
-      </header>
-
       <main className="p-4 space-y-6">
         {/* Hydration Widget */}
         <section className="bg-white p-6 rounded-xl shadow-md border border-slate-100">

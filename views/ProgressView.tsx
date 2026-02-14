@@ -23,16 +23,6 @@ const ProgressView: React.FC = () => {
 
   return (
     <div className="flex flex-col animate-in fade-in zoom-in-95 duration-500">
-      <header className="flex items-center bg-white/80 sticky top-0 z-10 backdrop-blur-md p-4 justify-between border-b border-gray-100">
-        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-          <span className="material-symbols-outlined">account_circle</span>
-        </div>
-        <h1 className="text-lg font-bold flex-1 text-center font-display">Mi Progreso</h1>
-        <button className="size-10 rounded-full bg-gray-50 flex items-center justify-center">
-          <span className="material-symbols-outlined">settings</span>
-        </button>
-      </header>
-
       <main className="p-4 space-y-6">
         {/* NutriScan IA Hero */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-[#0e49c7] p-6 shadow-xl shadow-primary/20">

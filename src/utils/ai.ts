@@ -27,9 +27,11 @@ export const processPdfWithGemini = async (
       const p = perfil || {};
       let promptText = `Actúa como procesador médico experto para MN-NutriApp. 
                 
-                CONTEXTO PACIENTE:
-                - Nombre Paciente: ${p.paciente || 'No especificado'}
-                - Médico Tratante: ${p.doctor || 'No especificado'}
+                CONTEXTO PACIENTE ACTUAL (PARA REFERENCIA):
+                - Nombre: ${p.paciente || 'Nuevo Paciente'}
+                - Médico: ${p.doctor || 'No asignado'}
+                
+                IMPORTANTE: Ignora el contexto actual si el PDF contiene datos de una persona diferente. Extrae siempre la información directamente de los documentos adjuntos.
                 
                 DATOS DISPONIBLES:
                 ${pdfPlanBase64 ? '- Se adjunta Plan Nutricional en PDF.' : '- NO hay PDF de plan.'}
