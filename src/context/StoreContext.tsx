@@ -25,7 +25,12 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         const local = localStorage.getItem('mn_pro_clinic_v6');
         if (local) {
             try {
-                setStore(JSON.parse(local));
+                const parsed = JSON.parse(local);
+                // Ensure default aiKey is present if not set by user
+                if (!parsed.aiKey) {
+                    parsed.aiKey = initialStore.aiKey;
+                }
+                setStore(parsed);
             } catch (e) {
                 console.error('Error parsing local storage', e);
             }
