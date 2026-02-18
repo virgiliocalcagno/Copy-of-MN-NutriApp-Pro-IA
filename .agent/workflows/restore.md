@@ -2,13 +2,14 @@
 description: Cómo restaurar el proyecto a un punto seguro si algo sale mal.
 ---
 
-# Restauración de Proyecto
+# Guía de Restauración de Emergencia
 
-Si sientes que los cambios recientes han dañado la aplicación, sigue estos pasos:
+Si la aplicación deja de funcionar o no te gusta un cambio reciente, sigue estos pasos:
 
-1. Consulta el archivo `CHECKPOINTS.md` en la raíz para ver los puntos estables.
-2. Pídeme: "Vuelve al Checkpoint [ID]" (Ejemplo: "Vuelve al CP001").
-3. Yo ejecutaré automáticamente los comandos de Git necesarios para deshacer los cambios y volver exactamente a ese estado.
+1. Abre el archivo `CHECKPOINTS.md` para ver los puntos estables.
+2. Escríbeme: **"/restore"** o simplemente **"Regresa al punto CP003"**.
+3. Al recibir tu mensaje, yo usaré Git para revertir todos los archivos al estado exacto que elegiste.
 
-// turbo
-Comando interno: `git reset --hard [HASH]`
+## ¿Qué hace esto técnicamente?
+
+Ejecuta un comando `git reset --hard`, lo que significa que **borra los cambios actuales** que están dando problemas y trae de vuelta la versión que funcionaba.
