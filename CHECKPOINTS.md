@@ -12,7 +12,8 @@ Este archivo es tu **"Botón de Pánico"**. Aquí guardo los momentos en los que
 | :--- | :--- | :--- | :--- | :--- |
 | CP001 | 2026-02-14 | `df669ae` | Interfaz Premium Restaurada (Header azul, barra inferior con iconos) | ✅ Estable |
 | CP002 | 2026-02-14 | `3c6085d` | Configuración de Firebase y arreglo de IA | ✅ Estable |
-| CP003 | 2026-02-18 | `ee3022b` | Punto de seguridad antes de activar el sistema de Snapshots | ✅ Actual |
+| CP003 | 2026-02-18 | `ee3022b` | Punto de seguridad inicial del sistema | ✅ Estable |
+| CP004 | 2026-02-18 | `1f04a75` | Comienzo de Nueva Sesión - Estado Verificado | ✅ Actual |
 
 ---
 > [!IMPORTANT]
