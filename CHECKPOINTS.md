@@ -2,7 +2,7 @@
 
 Este archivo es tu **"Botón de Pánico"**. Aquí guardo los momentos en los que la aplicación funciona perfectamente. Si algo se rompe, podemos volver a cualquiera de estos puntos en segundos.
 
-### Cómo usarlo
+## Cómo usarlo
 
 1. **Busca el ID** (ejemplo: `CP003`) en la tabla de abajo.
 2. **Dime**: "Antigravity, vuelve al Checkpoint `CP003`".
