@@ -10,12 +10,13 @@ Este archivo es tu **"Botón de Pánico"**. Aquí guardo los momentos en los que
 
 | ID | Fecha | Código (Hash) | Qué se guardó aquí | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| CP001 | 2026-02-14 | `df669ae` | Interfaz Premium Restaurada (Header azul, barra inferior con iconos) | ✅ Estable |
-| CP002 | 2026-02-14 | `3c6085d` | Configuración de Firebase y arreglo de IA | 🚀 Activo |
-| CP003 | 2026-02-18 | `ee3022b` | Punto de seguridad inicial del sistema | ✅ Estable |
-| CP004 | 2026-02-18 | `1f04a75` | Comienzo de Nueva Sesión - Estado Verificado | ✅ Estable |
-| CP005 | 2026-02-18 | `52355c7` | Restauración NutriScan AI completa. | ✅ Estable |
-| CP006 | 18/02/2026 | `73aee26b22a482c316bc84e9b280136263948e13` | **Versión Masterpiece**: Fusión Logica + UI Premium. | ✅ Estable |
+| `CP001` | 14/02/2026 | `df669ae` | Interfaz Premium Restaurada (Header azul, barra inferior con iconos) | ✅ Estable |
+| `CP002` | 14/02/2026 | `3c6085d` | Configuración de Firebase y arreglo de IA | ✅ Estable |
+| `CP003` | 18/02/2026 | `ee3022b` | Punto de seguridad inicial del sistema | ✅ Estable |
+| `CP004` | 18/02/2026 | `1f04a75` | Comienzo de Nueva Sesión - Estado Verificado | ✅ Estable |
+| `CP005` | 18/02/2026 | `52355c7` | Restauración NutriScan AI completa. | ✅ Estable |
+| `CP006` | 18/02/2026 | `73aee26` | **Versión Masterpiece**: Fusión Logica + UI Premium. | ✅ Estable |
+| `CP007` | 18/02/2026 | `8deb143` | **Prueba 002+006**: 4 botones, NutriScan en Zona Fit, Ficha Médica CP002. | 🚀 Activo |
 
 ---
 > [!IMPORTANT]

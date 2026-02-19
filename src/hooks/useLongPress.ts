@@ -1,26 +1,53 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export const useLongPress = (
-    onLongPress: () => void,
-    { delay = 500 } = {}
+    onLongPress: (e: any) => void,
+    onClick?: () => void,
+    { delay = 800, shouldPreventDefault = true } = {}
 ) => {
-    const timeoutRef = useRef<NodeJS.Timeout | undefined>();
+    const [longPressTriggered, setLongPressTriggered] = useState(false);
+    const timeout = useRef<ReturnType<typeof setTimeout>>();
+    const target = useRef<any>();
 
-    const start = useCallback(() => {
-        timeoutRef.current = setTimeout(onLongPress, delay);
-    }, [onLongPress, delay]);
+    const start = useCallback(
+        (event: any) => {
+            if (shouldPreventDefault && event.target) {
+                event.target.addEventListener('touchend', preventDefault, {
+                    passive: false
+                });
+                target.current = event.target;
+            }
+            setLongPressTriggered(false);
+            timeout.current = setTimeout(() => {
+                onLongPress(event);
+                setLongPressTriggered(true);
+            }, delay);
+        },
+        [onLongPress, delay, shouldPreventDefault]
+    );
 
-    const stop = useCallback(() => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-    }, []);
+    const clear = useCallback(
+        (event: any, shouldTriggerClick = true) => {
+            if (timeout.current) clearTimeout(timeout.current);
+            if (shouldTriggerClick && !longPressTriggered && onClick) onClick();
+            setLongPressTriggered(false);
+            if (shouldPreventDefault && target.current) {
+                target.current.removeEventListener('touchend', preventDefault);
+            }
+        },
+        [onClick, longPressTriggered, shouldPreventDefault]
+    );
+
+    const preventDefault = (event: any) => {
+        if (!event.cancelable) return;
+        event.preventDefault();
+    };
 
     return {
-        onMouseDown: start,
-        onMouseUp: stop,
-        onMouseLeave: stop,
-        onTouchStart: start,
-        onTouchEnd: stop,
+        onMouseDown: (e: any) => start(e),
+        onTouchStart: (e: any) => start(e),
+        onMouseUp: (e: any) => clear(e),
+        onMouseLeave: (e: any) => clear(e, false),
+        onTouchEnd: (e: any) => clear(e)
     };
 };

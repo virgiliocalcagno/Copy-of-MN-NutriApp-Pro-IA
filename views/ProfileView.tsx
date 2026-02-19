@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '@/src/context/StoreContext';
 import { processPdfWithGemini } from '@/src/utils/ai';
-import { initialStore } from '@/src/types/store';
+import { MealItem, initialStore } from '@/src/types/store';
 import { firebaseConfig } from '@/src/firebase';
 import { useLongPress } from '@/src/hooks/useLongPress';
 
@@ -26,7 +26,7 @@ const ProfileView: React.FC = () => {
     if (window.navigator?.vibrate) window.navigator.vibrate(50);
   };
 
-  const longPressProps = useLongPress(onLongPress, { delay: 800 });
+  const longPressProps = useLongPress(onLongPress, undefined, { delay: 800 });
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) {
@@ -48,22 +48,27 @@ const ProfileView: React.FC = () => {
           const data = await processPdfWithGemini(profile, base64, undefined, activeKey);
           if (data) {
             const mergedProfile = { ...initialStore.profile, ...data.perfilAuto };
+            const newMenu = data.semana || {};
+            const newExercises = data.ejercicios || {};
+            const newItems: MealItem[] = (data.compras || []).map((c: any, idx: number) => ({
+              id: Date.now() + '-' + idx,
+              n: c[0], q: c[1], lv: 4, cat: c[3] || 'Gral', p: c[3] || 'Gral', b: false
+            }));
+
             saveStore({
               ...store,
               profile: mergedProfile,
-              menu: data.semana || {},
-              exercises: data.ejercicios || {},
-              items: (data.compras || []).map((c: any, idx: number) => ({
-                id: Date.now() + '-' + idx,
-                n: c[0], q: c[1], lv: 4, cat: 'Gral', p: 'Gral', b: false
-              }))
+              menu: newMenu,
+              exercises: newExercises,
+              items: newItems
             });
-            alert(`✅ ANÁLISIS COMPLETADO EXITOSAMENTE`);
+            alert(`✅ ANÁLISIS COMPLETADO EXITOSAMENTE\n\n👤 Paciente: ${mergedProfile.paciente || 'Paciente'}\n📅 Menú: ${Object.keys(newMenu).length} días\n🛒 Despensa: ${newItems.length} productos\n\nTu perfil ha sido actualizado.`);
           }
         };
         reader.readAsDataURL(file);
       } catch (error: any) {
-        alert(`⚠️ Error al procesar el PDF: ${error.message}`);
+        console.error(error);
+        alert(`⚠️ Error al procesar el PDF: ${error.message || error}`);
       } finally {
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';

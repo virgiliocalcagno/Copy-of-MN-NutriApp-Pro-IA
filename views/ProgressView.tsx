@@ -18,33 +18,119 @@ const ProgressView: React.FC = () => {
   ];
 
   const handleNutriScan = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    alert("Funcionalidad NutriScan AI en mantenimiento. Pronto disponible.");
+    if (!event.target.files?.[0]) return;
+    const file = event.target.files[0];
+
+    setAnalyzing(true);
+    setAnalysisResult(null);
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = (reader.result as string).split(',')[1];
+
+        try {
+          const response = await fetch('https://us-central1-mn-nutriapp.cloudfunctions.net/analizarComida', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imagenBase64: base64Data,
+              perfilPaciente: store.profile
+            })
+          });
+
+          if (!response.ok) throw new Error("Error en el análisis");
+
+          const result = await response.json();
+          setAnalysisResult(result);
+        } catch (error) {
+          console.error("Error NutriScan:", error);
+          alert("Hubo un error al analizar la imagen. Por favor, intenta de nuevo.");
+        } finally {
+          setAnalyzing(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error Leyendo Archivo:", error);
+      setAnalyzing(false);
+    }
   };
 
   return (
     <div className="flex flex-col animate-in fade-in zoom-in-95 duration-500">
       <main className="p-4 space-y-6">
-        {/* NutriScan IA Hero */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-[#0e49c7] p-6 shadow-xl shadow-primary/20">
-          <div className="relative z-10 flex flex-col items-center text-center gap-4">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-white text-2xl font-extrabold">NutriScan IA</h2>
-              <p className="text-blue-100 text-sm font-medium">Escaneo inteligente con visión artificial</p>
+        {/* Results Section */}
+        {analysisResult && (
+          <div className="animate-in slide-in-from-top-4 duration-500 space-y-4">
+            <div className={`p-5 rounded-2xl border-2 shadow-sm ${analysisResult.semaforo === 'VERDE' ? 'bg-emerald-50 border-emerald-100' :
+                analysisResult.semaforo === 'AMARILLO' ? 'bg-amber-50 border-amber-100' :
+                  'bg-rose-50 border-rose-100'
+              }`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`size-10 rounded-full flex items-center justify-center ${analysisResult.semaforo === 'VERDE' ? 'bg-emerald-500' :
+                      analysisResult.semaforo === 'AMARILLO' ? 'bg-amber-500' :
+                        'bg-rose-500'
+                    } text-white shadow-lg`}>
+                    <span className="material-symbols-outlined font-bold">
+                      {analysisResult.semaforo === 'VERDE' ? 'check_circle' :
+                        analysisResult.semaforo === 'AMARILLO' ? 'warning' : 'block'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-800">Nutri-Semáforo: {analysisResult.semaforo}</h3>
+                    <p className="text-xs font-bold text-slate-500">Análisis Metabólico AI</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-slate-900 leading-none">{analysisResult.totalCalorias}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Calorías Est.</p>
+                </div>
+              </div>
+
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/40 mb-3">
+                <p className="text-sm font-bold text-slate-700 leading-relaxed italic">
+                  "{analysisResult.analisis}"
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/40 p-2 rounded-lg text-center border border-white/20">
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Proteína</p>
+                  <p className="text-sm font-black text-slate-800">{analysisResult.macros.p}</p>
+                </div>
+                <div className="bg-white/40 p-2 rounded-lg text-center border border-white/20">
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Carbos</p>
+                  <p className="text-sm font-black text-slate-800">{analysisResult.macros.c}</p>
+                </div>
+                <div className="bg-white/40 p-2 rounded-lg text-center border border-white/20">
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Grasas</p>
+                  <p className="text-sm font-black text-slate-800">{analysisResult.macros.f}</p>
+                </div>
+              </div>
             </div>
 
-            <label className="group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full bg-white/20 backdrop-blur-md border-2 border-white/50 shadow-inner hover:scale-105 transition-all">
-              <input type="file" accept="image/*" className="hidden" onChange={handleNutriScan} disabled={analyzing} />
-              <div className={`absolute inset-0 rounded-full bg-white/10 ${analyzing ? 'animate-ping' : ''}`}></div>
-              <span className="material-symbols-outlined text-white text-5xl font-light">
-                {analyzing ? 'hourglass_empty' : 'camera_enhance'}
-              </span>
-            </label>
+            {analysisResult.bioHack && (
+              <div className="bg-indigo-600 p-5 rounded-2xl shadow-lg shadow-indigo-200 flex items-start gap-4">
+                <div className="bg-white/20 p-2.5 rounded-xl text-white">
+                  <span className="material-symbols-outlined text-2xl font-light">bolt</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest mb-1">Bio-Hack Estrella</p>
+                  <p className="text-white font-bold leading-relaxed">{analysisResult.bioHack}</p>
+                </div>
+              </div>
+            )}
 
-            <button className="flex min-w-[160px] items-center justify-center rounded-full h-12 px-6 bg-white text-primary text-base font-bold shadow-lg active:scale-95 transition-all">
-              {analyzing ? 'Analizando...' : 'Analizar Comida'}
+            <button
+              onClick={() => setAnalysisResult(null)}
+              className="w-full py-3 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors"
+            >
+              Cerrar Análisis
             </button>
           </div>
-        </div>
+        )}
 
         {/* Stats Section */}
         <section>
