@@ -9,9 +9,9 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ currentView, setCurrentView }) => {
   const navItems = [
-    { id: 'home', label: 'Mi Casa', icon: 'home' },
+    { id: 'home', label: 'Inicio', icon: 'home' },
     { id: 'fitness', label: 'Zona Fit', icon: 'fitness_center' },
-    { id: 'progress', label: 'Mi Progreso', icon: 'monitoring' },
+    { id: 'shopping', label: 'Plan', icon: 'description' },
     { id: 'profile', label: 'Perfil', icon: 'person' }
   ] as const;
 
@@ -21,9 +21,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setCurrentView }) =>
         <button
           key={item.id}
           onClick={() => setCurrentView(item.id)}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            currentView === item.id ? 'text-primary' : 'text-slate-400'
-          }`}
+          className={`flex flex-col items-center gap-1 transition-colors ${currentView === item.id ? 'text-primary' : 'text-slate-400'
+            }`}
         >
           <span className={`material-symbols-outlined ${currentView === item.id ? 'fill-1' : ''}`}>
             {item.icon}

@@ -1,92 +1,69 @@
-import React, { useState, useRef } from 'react';
-import { useStore } from '../src/context/StoreContext';
-import { processPdfWithGemini } from '../src/utils/ai';
-import { MealItem, initialStore } from '../src/types/store';
-import { firebaseConfig } from '../src/firebase'; // Import config
+import React, { useState, useRef, useEffect } from 'react';
+import { useStore } from '@/src/context/StoreContext';
+import { processPdfWithGemini } from '@/src/utils/ai';
+import { initialStore } from '@/src/types/store';
+import { firebaseConfig } from '@/src/firebase';
+import { useLongPress } from '@/src/hooks/useLongPress';
 
 const ProfileView: React.FC = () => {
   const { store, user, saveStore, logout } = useStore();
   const [showLogout, setShowLogout] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ ...store.profile });
+  const [isLocked, setIsLocked] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { profile } = store;
 
+  // Sync local state when store changes
+  useEffect(() => {
+    setEditData({ ...store.profile });
+  }, [store.profile]);
+
+  const onLongPress = () => {
+    setIsLocked(!isLocked);
+    if (window.navigator?.vibrate) window.navigator.vibrate(50);
+  };
+
+  const longPressProps = useLongPress(onLongPress, { delay: 800 });
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) {
+      alert("El perfil está bloqueado. Mantén presionado el nombre para desbloquear.");
+      return;
+    }
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type !== 'application/pdf') {
         alert('Por favor selecciona un archivo PDF.');
         return;
       }
-
       setIsProcessing(true);
       try {
-        // Convert to Base64
         const reader = new FileReader();
         reader.onload = async () => {
           const base64 = reader.result as string;
-
-          let data;
-          try {
-            // Usar la llave de Gemini centralizada en firebase.ts (no visible en UI)
-            const activeKey = (firebaseConfig as any).geminiApiKey;
-            data = await processPdfWithGemini(profile, base64, undefined, activeKey);
-          } catch (error) {
-            console.error("Error procesando PDF:", error);
-            return;
-          }
-
+          const activeKey = (firebaseConfig as any).geminiApiKey;
+          const data = await processPdfWithGemini(profile, base64, undefined, activeKey);
           if (data) {
-            // Update Store
-            const newProfile = { ...store.profile, ...data.perfilAuto };
-
-            // Clean undefined/null values
-            Object.keys(newProfile).forEach(key => {
-              if (newProfile[key as keyof typeof newProfile] === 'No especificado' || newProfile[key as keyof typeof newProfile] === null) {
-                delete newProfile[key as keyof typeof newProfile];
-              }
-            });
-            // NEW: We REPLACE the data to avoid mixing different patients.
-            const mergedProfile = {
-              ...initialStore.profile, // Start clean
-              ...data.perfilAuto
-            };
-
-            const newMenu = data.semana || {};
-            const newExercises = data.ejercicios || {};
-
-            // Map Compras to MealItems
-            const newItems: MealItem[] = (data.compras || []).map((c, idx) => ({
-              id: Date.now() + '-' + idx,
-              n: c[0],
-              q: c[1],
-              lv: 4,
-              cat: c[3] || 'Gral',
-              p: c[3] || 'Gral',
-              b: false
-            }));
-
+            const mergedProfile = { ...initialStore.profile, ...data.perfilAuto };
             saveStore({
               ...store,
               profile: mergedProfile,
-              menu: newMenu,
-              exercises: newExercises,
-              items: newItems // REPLACED
+              menu: data.semana || {},
+              exercises: data.ejercicios || {},
+              items: (data.compras || []).map((c: any, idx: number) => ({
+                id: Date.now() + '-' + idx,
+                n: c[0], q: c[1], lv: 4, cat: 'Gral', p: 'Gral', b: false
+              }))
             });
-
-            const daysCount = Object.keys(newMenu || {}).length;
-            const itemsCount = newItems.length;
-            const patientName = mergedProfile.paciente || 'Paciente';
-
-            alert(`✅ ANÁLISIS COMPLETADO EXITOSAMENTE\n\n👤 Paciente: ${patientName}\n📅 Menú: ${daysCount} días generados\n🛒 Despensa: ${itemsCount} productos agregados\n\nTu perfil ha sido actualizado.`);
+            alert(`✅ ANÁLISIS COMPLETADO EXITOSAMENTE`);
           }
         };
         reader.readAsDataURL(file);
-
       } catch (error: any) {
-        console.error(error);
-        alert(`⚠️ Error al procesar el PDF: ${error.message || error}\n\nNecesitas una API Key válida de AI Studio.`);
+        alert(`⚠️ Error al procesar el PDF: ${error.message}`);
       } finally {
         setIsProcessing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -94,176 +71,218 @@ const ProfileView: React.FC = () => {
     }
   };
 
+  const handleSaveManual = () => {
+    saveStore({ ...store, profile: editData });
+    setIsEditing(false);
+  };
+
   return (
-    <div className="flex flex-col animate-in slide-in-from-bottom duration-500 relative">
+    <div className="flex flex-col bg-slate-50 min-h-screen pb-24">
       {isProcessing && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
           <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center animate-in zoom-in-95 max-w-sm w-full text-center">
             <div className="size-20 border-[6px] border-blue-100 border-t-blue-600 rounded-full animate-spin mb-6"></div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Analizando Ficha Médica</h3>
-            <p className="text-slate-500 text-sm leading-relaxed">
-              Extrayendo datos clínicos...<br />
-              <span className="text-xs text-blue-500">(Si tarda, te pedirá una API Key)</span>
-            </p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Analizando Datos</h3>
+            <p className="text-slate-500 text-sm">Extrayendo información clínica...</p>
           </div>
         </div>
       )}
 
-      {/* Profile Bio */}
-      <div className="px-6 py-6 flex items-center gap-5 bg-white border-b border-slate-100">
-        <div className="relative">
-          <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 overflow-hidden shadow-inner">
-            {user?.photoURL ? (
-              <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-            ) : (
-              <span className="material-symbols-outlined text-4xl text-primary">person</span>
-            )}
-          </div>
-          <div className="absolute -bottom-1 -right-1 bg-primary text-white size-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-            <span className="material-symbols-outlined text-[14px] font-bold">verified</span>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900">{profile.paciente || user?.displayName || 'Usuario'}</h2>
-            <div className="relative">
-              <button onClick={() => setShowLogout(!showLogout)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400">
-                <span className="material-symbols-outlined text-xl">settings</span>
-              </button>
-              {showLogout && (
-                <div className="absolute right-0 top-10 bg-white shadow-2xl rounded-xl border border-slate-100 p-2 w-44 z-[110] animate-in slide-in-from-top-2">
-                  <button onClick={logout} className="w-full text-left px-4 py-2 text-red-500 text-sm font-bold hover:bg-red-50 rounded-lg flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg">logout</span>
-                    Cerrar Sesión
-                  </button>
-                </div>
+      {/* Profile Header Block */}
+      <div className="bg-white px-6 pt-10 pb-6 rounded-b-[40px] shadow-sm border-b border-slate-100 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50"></div>
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <div className="size-24 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-xl overflow-hidden ring-4 ring-primary/5">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-4xl text-slate-300">person</span>
               )}
             </div>
-          </div>
-          <p className="text-sm text-primary font-bold bg-primary/5 px-2 py-0.5 rounded-md inline-block mt-1">Dr. {profile.doctor || 'No asignado'}</p>
-          <p className="text-xs text-slate-400 mt-1">{user?.email}</p>
-        </div>
-      </div>
-
-      {/* Import Action */}
-      <div className="px-6 py-6">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          accept="application/pdf"
-          className="hidden"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isProcessing}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-base transition-all shadow-lg shadow-slate-900/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed group"
-        >
-          <span className="material-symbols-outlined group-hover:animate-bounce">upload_file</span>
-          <span>Importar Ficha Médica (PDF)</span>
-        </button>
-        <p className="text-center text-xs text-slate-400 mt-3 px-4">
-          Sube tu Plan Nutricional. Si falla la clave interna, se te pedirá una Key propia.
-        </p>
-      </div>
-
-      {/* Medical Record */}
-      <main className="px-6 space-y-6">
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800">
-              <span className="material-symbols-outlined text-primary">clinical_notes</span>
-              Expediente de Salud
-            </h3>
-            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
-              <span className="material-symbols-outlined text-[10px]">lock</span>
-              Cifrado
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {/* Card Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-slate-400 text-lg">cake</span>
-                  <p className="text-xs text-slate-400 font-bold uppercase">Edad</p>
-                </div>
-                <p className="text-2xl font-bold text-slate-800">{profile.edad || '--'} <span className="text-sm font-medium text-slate-400">años</span></p>
+            {isLocked && (
+              <div className="absolute -bottom-1 -right-1 bg-primary text-white size-8 rounded-full flex items-center justify-center border-4 border-white shadow-lg animate-in zoom-in duration-300">
+                <span className="material-symbols-outlined text-[18px] font-fill">lock</span>
               </div>
-              <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-slate-400 text-lg">monitor_weight</span>
-                  <p className="text-xs text-slate-400 font-bold uppercase">Peso</p>
-                </div>
-                <p className="text-2xl font-bold text-slate-800">{profile.peso || '--'} <span className="text-sm font-medium text-slate-400">lbs</span></p>
-              </div>
-            </div>
-
-            {/* Card Comorbidities */}
-            <div className="p-5 rounded-2xl border border-pink-100 bg-pink-50/30 flex items-start gap-4">
-              <div className="bg-pink-100 p-2.5 rounded-xl text-pink-500">
-                <span className="material-symbols-outlined text-2xl">medical_information</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-slate-800 mb-2">Historial Clínico</p>
-                <div className="flex flex-wrap gap-2">
-                  {profile.comorbilidades && profile.comorbilidades.length > 0 ? (
-                    profile.comorbilidades.map((c, i) => (
-                      <span key={i} className="text-xs font-bold bg-white px-2.5 py-1 rounded-lg border border-pink-100 text-pink-600 shadow-sm">{c}</span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">No registradas</span>
-                  )}
-                  {profile.alergias && profile.alergias !== 'Ninguna' && (
-                    <span className="text-xs font-bold bg-white px-2.5 py-1 rounded-lg border border-red-100 text-red-500 shadow-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[10px]">warning</span>
-                      Alergia: {profile.alergias}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Card Observaciones */}
-            <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-start gap-4">
-              <div className="bg-slate-100 p-2.5 rounded-xl text-slate-500">
-                <span className="material-symbols-outlined text-2xl">description</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-slate-800 mb-1">Observaciones Médicas</p>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {profile.observaciones || 'Sin observaciones particulares.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Emergency Contact */}
-        <div className="pb-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 mb-4">
-            <span className="material-symbols-outlined text-red-500">contact_emergency</span>
-            Contacto de Emergencia
-          </h3>
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                <span className="material-symbols-outlined">sos</span>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900">{profile.emergencia || 'No configurado'}</p>
-                <p className="text-xs text-red-400 font-medium">Toque para llamar</p>
-              </div>
-            </div>
-            {profile.emergencia && (
-              <a href={`tel:${profile.emergencia}`} className="bg-red-500 text-white size-10 rounded-full flex items-center justify-center shadow-lg shadow-red-500/30 active:scale-95 transition-all">
-                <span className="material-symbols-outlined">call</span>
-              </a>
             )}
           </div>
+
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1" {...longPressProps}>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.paciente || ''}
+                    onChange={e => setEditData({ ...editData, paciente: e.target.value })}
+                    className="bg-slate-50 border-none p-0 w-full focus:ring-0 rounded font-black"
+                  />
+                ) : (profile.paciente || user?.displayName || 'Usuario')}
+              </h2>
+              <button onClick={() => setShowLogout(!showLogout)} className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
+                <span className="material-symbols-outlined">settings</span>
+              </button>
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-primary bg-primary/5 px-3 py-0.5 rounded-full inline-block">
+                  {isEditing ? (
+                    <span className="flex items-center gap-1">Dr. <input value={editData.doctor || ''} onChange={e => setEditData({ ...editData, doctor: e.target.value })} className="bg-transparent border-none p-0 w-24 text-primary font-bold focus:ring-0" /></span>
+                  ) : `Dr. ${profile.doctor || 'No asignado'}`}
+                </p>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">mail</span> {user?.email}
+              </p>
+            </div>
+          </div>
         </div>
 
+        {/* Logout Dropdown */}
+        {showLogout && (
+          <div className="absolute right-6 top-16 bg-white shadow-2xl rounded-2xl border border-slate-100 p-2 w-48 z-[110] animate-in slide-in-from-top-4">
+            <button onClick={logout} className="w-full text-left px-4 py-3 text-red-500 text-sm font-black hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors">
+              <span className="material-symbols-outlined text-xl">logout</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Actions Bar */}
+      <div className="px-6 -mt-6 flex gap-3 z-10">
+        {!isLocked && (
+          <>
+            <button
+              onClick={() => isEditing ? handleSaveManual() : setIsEditing(true)}
+              className="flex-1 bg-white hover:bg-slate-50 py-4 rounded-2xl shadow-lg border border-slate-100 font-black text-sm flex items-center justify-center gap-3 active:scale-95 transition-all text-slate-700"
+            >
+              <span className="material-symbols-outlined text-primary font-fill">{isEditing ? 'save' : 'edit_note'}</span>
+              {isEditing ? 'GUARDAR' : 'EDITAR'}
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessing}
+              className="bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-2xl shadow-lg border border-slate-100 font-black text-sm flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined font-fill">upload_file</span>
+            </button>
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="application/pdf" className="hidden" />
+          </>
+        )}
+      </div>
+
+      {/* Medical Content */}
+      <main className="px-6 py-8 space-y-8 animate-in fade-in duration-500">
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined font-fill">clinical_notes</span>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Ficha Técnica</h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+              <p className="text-[10px] text-slate-400 font-black uppercase mb-3 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs">cake</span> EDAD
+              </p>
+              <div className="flex items-baseline gap-1">
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editData.edad || ''}
+                    onChange={e => setEditData({ ...editData, edad: parseInt(e.target.value) })}
+                    className="text-2xl font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-16"
+                  />
+                ) : <span className="text-3xl font-black text-slate-800">{profile.edad || '--'}</span>}
+                <span className="text-xs font-bold text-slate-400 uppercase">años</span>
+              </div>
+            </div>
+            <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+              <p className="text-[10px] text-slate-400 font-black uppercase mb-3 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs">monitor_weight</span> PESO
+              </p>
+              <div className="flex items-baseline gap-1">
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editData.peso || ''}
+                    onChange={e => setEditData({ ...editData, peso: parseFloat(e.target.value) })}
+                    className="text-2xl font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-16"
+                  />
+                ) : <span className="text-3xl font-black text-slate-800">{profile.peso || '--'}</span>}
+                <span className="text-xs font-bold text-slate-400 uppercase">lbs</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Patient History */}
+        <section className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="material-symbols-outlined text-pink-500">medical_information</span>
+            <h4 className="font-black text-slate-800 text-sm uppercase tracking-wide">Comorbilidades</h4>
+          </div>
+          {isEditing ? (
+            <textarea
+              value={(editData.comorbilidades || []).join(', ')}
+              onChange={e => setEditData({ ...editData, comorbilidades: e.target.value.split(',').map(s => s.trim()) })}
+              className="w-full bg-slate-50 border-none rounded-xl text-sm focus:ring-primary h-24 p-3 font-medium text-slate-600"
+              placeholder="Diabetes, Hipertensión..."
+            />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {profile.comorbilidades && profile.comorbilidades.length > 0 ? (
+                profile.comorbilidades.map((c, i) => (
+                  <span key={i} className="text-xs font-black bg-slate-50 px-4 py-2 rounded-xl text-slate-600 border border-slate-100 shadow-sm">{c}</span>
+                ))
+              ) : <p className="text-xs text-slate-400 italic">No hay registros clínicos.</p>}
+            </div>
+          )}
+        </section>
+
+        <section className="bg-slate-900 p-6 rounded-[32px] text-white shadow-xl shadow-slate-900/20">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="material-symbols-outlined text-amber-400 font-fill">warning</span>
+            <h4 className="font-black text-[10px] uppercase tracking-widest opacity-60 text-white">Observaciones Limitantes</h4>
+          </div>
+          {isEditing ? (
+            <textarea
+              value={editData.observaciones || ''}
+              onChange={e => setEditData({ ...editData, observaciones: e.target.value })}
+              className="w-full bg-white/10 border-none rounded-xl text-sm focus:ring-white h-24 p-3 font-medium text-white"
+            />
+          ) : (
+            <p className="text-sm font-medium leading-relaxed italic opacity-90">
+              {profile.observaciones || "El paciente no presenta limitantes reportadas."}
+            </p>
+          )}
+        </section>
+
+        {/* Emergency Card */}
+        <section className="bg-red-50 p-6 rounded-[32px] border border-red-100 flex items-center justify-between group">
+          <div className="flex items-center gap-4">
+            <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-red-500 shadow-sm border border-red-100 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined font-fill">sos</span>
+            </div>
+            <div>
+              <p className="text-[10px] text-red-400 font-black uppercase mb-0.5 tracking-wider">Contacto de Emergencia</p>
+              {isEditing ? (
+                <input
+                  value={editData.emergencia || ''}
+                  onChange={e => setEditData({ ...editData, emergencia: e.target.value })}
+                  className="text-lg font-black text-slate-900 bg-transparent border-none p-0 focus:ring-0 w-32"
+                />
+              ) : <p className="text-lg font-black text-slate-900">{profile.emergencia || "No asignado"}</p>}
+            </div>
+          </div>
+          {(profile.emergencia && !isEditing) && (
+            <a href={`tel:${profile.emergencia}`} className="size-12 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-red-500/30 active:scale-90 transition-all">
+              <span className="material-symbols-outlined font-fill text-xl">call</span>
+            </a>
+          )}
+        </section>
       </main>
     </div>
   );

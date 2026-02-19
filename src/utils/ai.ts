@@ -97,3 +97,20 @@ export const processPdfWithGemini = async (
     throw error;
   }
 };
+
+export const analyzeImageWithGemini = async (base64Image: string) => {
+  try {
+    const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
+    const response = await fetch('https://us-central1-mn-nutriapp.cloudfunctions.net/analizarComida', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: cleanBase64 })
+    });
+
+    if (!response.ok) throw new Error("Error en servidor de análisis");
+    return await response.json();
+  } catch (error) {
+    console.error("Error NutriScan:", error);
+    throw error;
+  }
+};
